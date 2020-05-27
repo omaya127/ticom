@@ -1,0 +1,18 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+KEY_CTRL_A	parse.h	4;"	d
+KEY_CTRL_Q	parse.h	5;"	d
+SUPER_KEY	parse.h	7;"	d
+_PARSE_H_	parse.h	2;"	d
+key	parse.c	/^static char key = 0;$/;"	v	file:
+main	test.c	/^int main(int argc, char *argv[])$/;"	f
+main	ticom.c	/^int main(int argc, char *argv[])$/;"	f
+parse_keys	parse.c	/^int parse_keys(const char *buf, int len)$/;"	f
+set_baudrate	term.c	/^void set_baudrate (struct termios *opt, unsigned int baudrate)$/;"	f
+set_data_bit	term.c	/^void set_data_bit (struct termios *opt, unsigned int databit)$/;"	f
+tty_fd	test.c	/^int tty_fd = -1;$/;"	v
+tty_fd	ticom.c	/^int tty_fd = -1;$/;"	v

@@ -52,9 +52,9 @@ void tty_set_parity(struct termios *opt, char parity)
 void tty_set_stopbit(struct termios *opt, const char *stopbit)
 {
     opt->c_cflag &= ~CSTOPB; /* 1 stop bit */
-    opt->c_cflag |= CSTOPB;  /* 2 stop bits */
+    //opt->c_cflag |= CSTOPB;  /* 2 stop bits */
 }
-
+#if 0
 int term_set_raw(int fd, struct termios *opt)
 {
     //tcgetattr(terms->fd, opt);
@@ -68,3 +68,4 @@ int term_set_opt(int fd, struct termios *opt)
     tcflush (fd, TCIFLUSH);
     tcsetattr(fd, TCSANOW, &term);
 }
+#endif

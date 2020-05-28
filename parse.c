@@ -1,4 +1,5 @@
 #include "parse.h"
+#include <stdio.h>
 
 static char key = 0;
 
@@ -22,7 +23,7 @@ int parse_keys(const char *buf, int len)
         }
         else if(buf[i] == SUPER_KEY) {
             key = SUPER_KEY;
-            printf("super key\n");
+            //printf("super key\n");
         }
     }
     return key;

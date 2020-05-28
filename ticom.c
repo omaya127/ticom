@@ -3,13 +3,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <termios.h>
+#include "parse.h"
+#include "term.h"
 
-int tty_fd = -1;
 
 int main(int argc, char *argv[])
 {
-    struct termios term;
+    int tty_fd = -1;
+    struct termset term_std, term_tty;
+    //struct timeval *ptv;
+    fd_set rset, wset;
+    int ret, nbytes;
 
     tty_fd = open(argv[1], O_RDWR | O_NONBLOCK | O_NOCTTY);
     if (tty_fd < 0) {
@@ -17,55 +21,85 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    tcgetattr(STDIN_FILENO, &term);
-    term.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
+    /* set tty */
+    if (tcgetattr(tty_fd, &term_tty.old_opt) < 0) {
+        printf("[!] tcgetattr failed!\n");
+    }
+    term_tty.now_opt = term_tty.old_opt;
+    tty_set_baudrate(&term_tty.now_opt, 115200);
+    tty_set_databit(&term_tty.now_opt, 8);
+    tty_set_parity(&term_tty.now_opt, 'N');
+    tty_set_stopbit(&term_tty.now_opt, NULL);
+    if (tcflush (tty_fd, TCIFLUSH) < 0) {
+        printf("[!] tcflush failed\n");
+    }
+    if (tcsetattr(tty_fd, TCSANOW, &term_tty.now_opt) < 0) {
+        printf("[!] tcsetattr failed\n");
+    }
 
-    tcgetattr(tty_fd, &term);
-    // baud
-    cfsetispeed(&term, 115200);
-    cfsetospeed(&term, 115200);
-    // data bit
-    term.c_cflag &= ~CSIZE;
-    term.c_cflag |= CS8;
-    // check bit
-    term.c_cflag &= ~PARENB;
-    // stop bit
-    term.c_cflag &= ~CSTOPB;
-    tcflush (tty_fd, TCIFLUSH);
-    tcsetattr(tty_fd, TCSANOW, &term);
+    /* set stdin */
+    tcgetattr(STDIN_FILENO, &term_std.old_opt);
+    term_std.now_opt = term_std.old_opt;
+    term_std.now_opt.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    term_std.now_opt.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &term_std.now_opt);
 
-    //struct timeval *ptv;
-    int ret, nbytes;
-    fd_set rset, wset;
-
+    printf("loop\n");
     for (;;) {
         FD_ZERO(&rset);
         FD_ZERO(&wset);
         FD_SET(tty_fd, &rset);
+        //FD_SET(tty_fd, &wset);
         FD_SET(STDIN_FILENO, &rset);
 
-        ret = select(tty_fd + 1, &rset, NULL, NULL, NULL);
+        ret = select(tty_fd + 1, &rset, &wset, NULL, NULL);
 
         if (ret == -1) {
-            printf("select error\n");
+            printf("\n[!] select error\n");
             return -1;
         }
 
-        /* read from term */
+        /* read from stdin */
         if (FD_ISSET(STDIN_FILENO, &rset)) {
             char buf[32];
+            printf("b4 stdin\n");
             nbytes = read(STDIN_FILENO, buf, 32);
             if (nbytes > 0) {
-                write(tty_fd, buf, nbytes);
+                switch (parse_keys(buf, nbytes)) {
+                    case KEY_CTRL_A:
+                        break;
+                    case KEY_CTRL_Q:
+                        goto exit_label;
+                        break;
+                    default:
+                        write(tty_fd, buf, nbytes);
+                        break;
+                }
+                printf("--\n");
+            }
+            else{
+                printf("read stdin failed\n");
             }
         }
+
+        /* read from tty */
         if (FD_ISSET(tty_fd, &rset)) {
             char buf[128];
+            printf("b4 tty\n");
             nbytes = read(tty_fd, buf, 128);
             if (nbytes > 0) {
                 write(STDOUT_FILENO, buf, nbytes);
             }
+            else {
+                printf("read tty failed\n");
+            }
         }
     }
+
+exit_label:
+    tcsetattr(tty_fd, TCSANOW, &term_tty.old_opt);
+    tcsetattr(STDIN_FILENO, TCSANOW, &term_std.old_opt);
+    close(tty_fd);
+    printf("\n[-] ticom exit\n");
+    return 0;
 }

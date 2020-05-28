@@ -3,13 +3,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "parse.h"
+#include <termios.h>
 
 int tty_fd = -1;
 
 int main(int argc, char *argv[])
 {
-    struct termset term_std, term_tty;
+    struct termios term;
 
     tty_fd = open(argv[1], O_RDWR | O_NONBLOCK | O_NOCTTY);
     if (tty_fd < 0) {
@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    tcgetattr(STDIN_FILENO, &term_std.opt_old);
-    term_std.opt_now = term_std.opt_old;
+    tcgetattr(STDIN_FILENO, &term);
+    term.c_lflag &= ~(ECHO | ICANON);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 
     tcgetattr(tty_fd, &term);
@@ -57,18 +57,15 @@ int main(int argc, char *argv[])
             char buf[32];
             nbytes = read(STDIN_FILENO, buf, 32);
             if (nbytes > 0) {
-                if(parse_keys(buf, nbytes) == KEY_CTRL_Q) {
-                    break;
-                }
-                write(STDIN_FILENO, buf, nbytes);
-                printf(" ");
-                for(int i=0; i<nbytes; i++){
-                    printf("%02X", buf[i]);
-                }
-                printf("\n");
+                write(tty_fd, buf, nbytes);
+            }
+        }
+        if (FD_ISSET(tty_fd, &rset)) {
+            char buf[128];
+            nbytes = read(tty_fd, buf, 128);
+            if (nbytes > 0) {
+                write(STDOUT_FILENO, buf, nbytes);
             }
         }
     }
-    printf("[>] ticom exit\n");
-    return 0;
 }

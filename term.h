@@ -4,9 +4,8 @@
 #include <termios.h>
 
 struct termset {
-    int fd;
-    struct termios opt_old;
-    struct termios opt_now;
+    struct termios old_opt;
+    struct termios now_opt;
 };
 
 int  tty_set_baudrate(struct termios *opt, unsigned int baudrate);

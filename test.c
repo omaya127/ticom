@@ -3,14 +3,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <termios.h>
 #include "parse.h"
 
 int tty_fd = -1;
 
 int main(int argc, char *argv[])
 {
-    struct termios term;
+    struct termset term_std, term_tty;
 
     tty_fd = open(argv[1], O_RDWR | O_NONBLOCK | O_NOCTTY);
     if (tty_fd < 0) {
@@ -18,9 +17,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    tcgetattr(STDIN_FILENO, &term);
-    term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    term.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+    tcgetattr(STDIN_FILENO, &term_std.opt_old);
+    term_std.opt_now = term_std.opt_old;
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 
     tcgetattr(tty_fd, &term);
@@ -71,5 +69,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-    printf("# [!] ticom exit\n");
+    printf("[>] ticom exit\n");
+    return 0;
 }

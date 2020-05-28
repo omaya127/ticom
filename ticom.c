@@ -37,6 +37,9 @@ int main(int argc, char *argv[])
         printf("[!] tcsetattr failed\n");
     }
 
+    tcgetattr(tty_fd, &term_tty.now_opt);
+    printf("ispeed=%d\n", cfgetispeed(&term_tty.now_opt));
+    printf("ospeed=%d\n", cfgetospeed(&term_tty.now_opt));
     /* set stdin */
     tcgetattr(STDIN_FILENO, &term_std.old_opt);
     term_std.now_opt = term_std.old_opt;
@@ -62,7 +65,6 @@ int main(int argc, char *argv[])
         /* read from stdin */
         if (FD_ISSET(STDIN_FILENO, &rset)) {
             char buf[32];
-            printf("b4 stdin\n");
             nbytes = read(STDIN_FILENO, buf, 32);
             if (nbytes > 0) {
                 switch (parse_keys(buf, nbytes)) {
@@ -75,7 +77,6 @@ int main(int argc, char *argv[])
                         write(tty_fd, buf, nbytes);
                         break;
                 }
-                printf("--\n");
             }
             else{
                 printf("read stdin failed\n");
@@ -85,14 +86,12 @@ int main(int argc, char *argv[])
         /* read from tty */
         if (FD_ISSET(tty_fd, &rset)) {
             char buf[128];
-            printf("b4 tty\n");
             nbytes = read(tty_fd, buf, 128);
-            if (nbytes > 0) {
-                write(STDOUT_FILENO, buf, nbytes);
+            if (nbytes <= 0) {
+                printf("[!] read tty failed\n");
+                goto exit_label;
             }
-            else {
-                printf("read tty failed\n");
-            }
+            write(STDOUT_FILENO, buf, nbytes);
         }
     }
 

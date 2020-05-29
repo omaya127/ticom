@@ -1,6 +1,97 @@
 #include <stdio.h>
 #include "term.h"
 
+struct termios save_opts[2];
+
+int tty_save(int fd)
+{
+    struct termios opt;
+
+    if (tcgetattr(fd, &opt) < 0) {
+        return -1;
+    }
+
+    switch (fd) {
+        case STDIN_FILENO:
+            save_opts[0] = opt;
+            break;
+        default:
+            save_opts[1] = opt;
+            break;
+    }
+
+    return 0;
+}
+
+int tty_reset(int fd)
+{
+    struct termios opt;
+    switch (fd) {
+        case STDIN_FILENO:
+            opt = save_opts[0];
+            break;
+        default:
+            opt = save_opts[1];
+            break;
+    }
+    if (tcsetattr(fd, TCSAFLUSH, &opt) < 0) {
+        return -1;
+    }
+    return -1;
+}
+
+int tty_raw(int fd)
+{
+    struct termios opt;
+
+    if (tcgetattr(fd, &opt) < 0) {
+        return -1;
+    }
+
+    opt.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+    opt.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    opt.c_cflag &= ~(CSIZE | PARENB);
+
+    opt.c_cflag |= CS8;
+    opt.c_oflag &= ~(OPOSE);
+    opt.c_cc[VMIN] = 1;
+    opt.c_cc[VTIME] = 0;
+
+    if (tcsetattr(fd, TCSAFLUSH, &opt) < 0) {
+        return -1;
+    }
+
+    /* Verify */
+    if (tcgetattr(fd, &opt) < 0) {
+        return -1;    
+    }
+
+    if ((opt.c_lflag & (ECHO | ICANON | IEXTEN | ISIG)) ||
+            (opt.c_iflag & (BRKINT | ICRNL | INPCK | ISTRIP | IXON)) ||
+            (opt.c_cflag & (CSIZE | PARENB | CS8) != CS8) ||
+            (opt.c_oflag & (OPOSE)) || opt.c_cc[VMIN] != 1 || opt.c_cc[VTIME] != 0) {
+        printf("verify failed!\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int tty_set(int fd, int baudrate, int databit, char parity, int stopbit)
+{
+    struct termios opt;
+
+    if (tcgetattr(fd, &opt) < 0) {
+        return -1;
+    }
+
+    cfsetispeed(opt, baudrate);
+    cfsetospeed(opt, baudrate);
+    opt->c_cflag |= CS8; // databit
+    opt->c_cflag &= ~PARENB; // no check bit
+
+}
+#if 0
 int tty_set_baudrate(struct termios *opt, unsigned int baudrate)
 {
     cfsetispeed(opt, baudrate);
@@ -53,19 +144,5 @@ void tty_set_stopbit(struct termios *opt, const char *stopbit)
 {
     opt->c_cflag &= ~CSTOPB; /* 1 stop bit */
     //opt->c_cflag |= CSTOPB;  /* 2 stop bits */
-}
-#if 0
-int term_set_raw(int fd, struct termios *opt)
-{
-    //tcgetattr(terms->fd, opt);
-    opt->c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    opt->c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-    tcsetattr(fd, TCSAFLUSH, opt);
-}
-
-int term_set_opt(int fd, struct termios *opt)
-{
-    tcflush (fd, TCIFLUSH);
-    tcsetattr(fd, TCSANOW, &term);
 }
 #endif

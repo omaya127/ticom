@@ -38,8 +38,7 @@ int main(int argc, char *argv[])
     }
 
     tcgetattr(tty_fd, &term_tty.now_opt);
-    printf("ispeed=%d\n", cfgetispeed(&term_tty.now_opt));
-    printf("ospeed=%d\n", cfgetospeed(&term_tty.now_opt));
+
     /* set stdin */
     tcgetattr(STDIN_FILENO, &term_std.old_opt);
     term_std.now_opt = term_std.old_opt;
@@ -47,7 +46,6 @@ int main(int argc, char *argv[])
     term_std.now_opt.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &term_std.now_opt);
 
-    printf("loop\n");
     for (;;) {
         FD_ZERO(&rset);
         FD_ZERO(&wset);
@@ -80,6 +78,7 @@ int main(int argc, char *argv[])
             }
             else{
                 printf("read stdin failed\n");
+                goto exit_label;
             }
         }
 

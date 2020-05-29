@@ -9,17 +9,13 @@ KEY_CTRL_Q	parse.h	5;"	d
 SUPER_KEY	parse.h	7;"	d
 _PARSE_H_	parse.h	2;"	d
 _TERM_H_	term.h	2;"	d
-baud	log.hp	/^speed 9600 baud; rows 0; columns 0; line = 0;$/;"	v
+baud	log/log.hp	/^speed 9600 baud; rows 0; columns 0; line = 0;$/;"	v
 key	parse.c	/^static char key = 0;$/;"	v	file:
-main	test.c	/^int main(int argc, char *argv[])$/;"	f
 main	ticom.c	/^int main(int argc, char *argv[])$/;"	f
-now_opt	term.h	/^    struct termios now_opt;$/;"	m	struct:termset	typeref:struct:termset::termios
-old_opt	term.h	/^    struct termios old_opt;$/;"	m	struct:termset	typeref:struct:termset::termios
 parse_keys	parse.c	/^int parse_keys(const char *buf, int len)$/;"	f
-termset	term.h	/^struct termset {$/;"	s
-tty_fd	test.c	/^int tty_fd = -1;$/;"	v
+save_opts	term.c	/^struct termios save_opts[2];$/;"	v	typeref:struct:termios
 tty_raw	term.c	/^int tty_raw(int fd)$/;"	f
-tty_set_baudrate	term.c	/^int tty_set_baudrate(struct termios *opt, unsigned int baudrate)$/;"	f
-tty_set_databit	term.c	/^void tty_set_databit(struct termios *opt, unsigned int databit)$/;"	f
-tty_set_parity	term.c	/^void tty_set_parity(struct termios *opt, char parity)$/;"	f
-tty_set_stopbit	term.c	/^void tty_set_stopbit(struct termios *opt, const char *stopbit)$/;"	f
+tty_reset	term.c	/^int tty_reset(int fd)$/;"	f
+tty_save	term.c	/^int tty_save(int fd)$/;"	f
+tty_term	term.c	/^int tty_term(int fd)$/;"	f
+tty_uart	term.c	/^int tty_uart(int fd, speed_t baudrate, int databit, char parity, int stopbit)$/;"	f

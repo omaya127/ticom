@@ -3,14 +3,10 @@
 
 #include <termios.h>
 
-struct termset {
-    struct termios old_opt;
-    struct termios now_opt;
-};
-
-int  tty_set_baudrate(struct termios *opt, unsigned int baudrate);
-void tty_set_databit(struct termios *opt, unsigned int databit);
-void tty_set_parity(struct termios *opt, char parity);
-void tty_set_stopbit(struct termios *opt, const char *stopbit);
+int tty_save(int fd);
+int tty_reset(int fd);
+int tty_raw(int fd);
+int tty_uart(int fd, speed_t baudrate, int databit, char parity, int stopbit);
+int tty_term(int fd);
 
 #endif

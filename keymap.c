@@ -1,9 +1,9 @@
-#include "parse.h"
+#include "keymap.h"
 #include <stdio.h>
 
 static char key = 0;
 
-int parse_keys(const char *buf, int len)
+int keymap(const char *buf, int len)
 {
     int i;
     for (i = 0; i < len; i++) {

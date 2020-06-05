@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "parse.h"
+#include "keymap.h"
 #include "term.h"
 
 
@@ -20,10 +20,20 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    tty_raw(tty_fd);
-    tty_uart(tty_fd, 115200, 0, 0, 0);
+    ret = tty_raw(tty_fd);
+    if (ret < 0) {
+        printf("\n[!] tty raw failed: %d!\n", ret);
+        goto exit_label;
+    }
+
+    ret = tty_set(tty_fd, "115200", "0", "0", "0");
+    if (ret < 0) {
+        printf("\n[!] tty set failed: %d!\n", ret);
+        goto exit_label;
+    }
+
     tty_save(STDIN_FILENO);
-    tty_term(STDIN_FILENO);
+    tty_std(STDIN_FILENO);
 
     for (;;) {
         FD_ZERO(&rset);
@@ -44,7 +54,7 @@ int main(int argc, char *argv[])
             char buf[32];
             nbytes = read(STDIN_FILENO, buf, 32);
             if (nbytes > 0) {
-                switch (parse_keys(buf, nbytes)) {
+                switch (keymap(buf, nbytes)) {
                     case KEY_CTRL_A:
                         break;
                     case KEY_CTRL_Q:
